@@ -8,8 +8,12 @@ Only rules that are **universal across every project**:
 
 - `coding-rules.md` -- coding standards, architecture, security, deployment, testing
 - `process-rules.md` -- project tracking duties (README, bugs.md, features.md, plans, ADRs)
+- `personas.md` -- team structure, voices, naming convention, handoff protocol
 - `CLAUDE.md` -- root Claude Code instructions (references the rules files)
 - `AGENTS.md` -- root agent instructions
+- `rules/` -- domain-specific rule sets:
+  - `rules/network-security.md` -- WireGuard/Tailscale zero-trust mesh requirements
+  - `rules/content-safety.md` -- immutable content rules (no porn, no copyright, no real people) + AI enforcement + report-user requirements
 
 ## What does NOT belong here
 
