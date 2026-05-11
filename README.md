@@ -14,6 +14,7 @@ Only rules that are **universal across every project**:
 - `rules/` -- domain-specific rule sets:
   - `rules/network-security.md` -- WireGuard/Tailscale zero-trust mesh requirements
   - `rules/content-safety.md` -- immutable content rules (no porn, no copyright, no real people) + AI enforcement + report-user requirements
+  - `rules/code-structure.md` -- OO by default, dataclasses/Pydantic for data, YAML for human-readable config, JSON for machine interchange
 
 ## What does NOT belong here
 
