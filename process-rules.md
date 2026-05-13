@@ -32,12 +32,14 @@ The LLM SHOULD maintain an `ARCHITECTURE.md` for deeper detail and `docs/adr/` f
 
 The LLM MUST maintain two files at the repo root:
 
-- **`bugs.md`** — running list of known bugs. When a bug is discovered or reported, the LLM MUST add it with a short description, date observed, and status (`open` / `fixed` with commit ref).
-- **`features.md`** — running list of planned or requested features. When a future feature or enhancement is mentioned, the LLM MUST add it with a short description, date added, and status (`planned` / `in progress` / `done`).
+- **`bugs.md`** — running list of known bugs. When a bug is discovered or reported, the LLM MUST add it with a short description, date observed, and status (`Open` / `In Progress` / `Completed`).
+- **`features.md`** — running list of planned or requested features. When a future feature or enhancement is mentioned, the LLM MUST add it with a short description, date added, and status (`Open` / `In Progress` / `Completed`).
 
 Before starting work on a bug or feature, the LLM MUST check these files for existing entries to avoid duplicates.
 
 When a bug is fixed or a feature is shipped, the LLM MUST update the entry in-place with the resolution date and commit/PR reference.
+
+Changed `bugs.md` and `features.md` rows MUST use statuses beginning with exactly one of: `Open`, `In Progress`, or `Completed`.
 
 ---
 
@@ -46,10 +48,12 @@ When a bug is fixed or a feature is shipped, the LLM MUST update the entry in-pl
 At session start and whenever plan files change, the LLM MUST scan `/plans` and `PLAN_*.md`:
 
 1. Evaluate whether each plan has been implemented by checking the codebase.
-2. Update the first line with `Status: Implemented, <date>` / `Status: Partial — Remaining: <items>` / `Status: Not Implemented`.
+2. Update the first line immediately when work starts or finishes, using `Status: In Progress`, `Status: Implemented, <date>`, `Status: Partial — Remaining: <items>`, or `Status: Not Implemented`.
 3. Update `PLANS.md` at the repo root with a current status table.
 
 The LLM MUST NOT modify plans in `/archive` subdirectories — those are retired.
+
+Projects SHOULD install an agent-agnostic pre-commit hook for plan/tracker status hygiene. The hook MUST run for humans and all coding agents alike, and SHOULD block commits when changed plan files lack a first-line `Status:` or changed `bugs.md` / `features.md` rows use stale vocabulary such as `planned`, `done`, or `fixed (uncommitted)`.
 
 ---
 

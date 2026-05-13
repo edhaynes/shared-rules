@@ -11,6 +11,7 @@ Only rules that are **universal across every project**:
 - `personas.md` -- team structure, voices, naming convention, handoff protocol
 - `CLAUDE.md` -- root Claude Code instructions (references the rules files)
 - `AGENTS.md` -- root agent instructions
+- `hooks/` -- reusable, agent-agnostic Git hooks for downstream repos
 - `rules/` -- domain-specific rule sets:
   - `rules/network-security.md` -- WireGuard/Tailscale zero-trust mesh requirements
   - `rules/content-safety.md` -- immutable content rules (no porn, no copyright, no real people) + AI enforcement + report-user requirements
@@ -39,3 +40,22 @@ Then add project-specific instructions in `CLAUDE.local.md` alongside it.
 ## Editing
 
 Edit rules **here**, not in downstream repos. Downstream repos reference these files; they don't copy them.
+
+## Reusable hooks
+
+Projects SHOULD install the plan/tracker status hook when they use `bugs.md`,
+`features.md`, `plans/`, or `PLANS.md`:
+
+```yaml
+repos:
+  - repo: local
+    hooks:
+      - id: plan-tracker-status
+        name: plan/tracker status hygiene
+        entry: python3 /path/to/shared-rules/hooks/check_plan_tracker_status.py --staged
+        language: system
+        pass_filenames: false
+```
+
+This is deliberately not tied to any coding agent; it runs for normal Git
+commits by humans, Claude, Codex, OpenCode, Cursor, and other tools alike.
