@@ -12,6 +12,8 @@ Only rules that are **universal across every project**:
 - `CLAUDE.md` -- root Claude Code instructions (references the rules files)
 - `AGENTS.md` -- root agent instructions
 - `hooks/` -- reusable, agent-agnostic Git hooks for downstream repos
+- `tooling/` -- tool-specific workflow guidance for Codex, OpenCode, etc.
+- `templates/` -- copyable skill/hook/config templates for downstream repos
 - `rules/` -- domain-specific rule sets:
   - `rules/network-security.md` -- WireGuard/Tailscale zero-trust mesh requirements
   - `rules/content-safety.md` -- immutable content rules (no porn, no copyright, no real people) + AI enforcement + report-user requirements
@@ -36,6 +38,17 @@ In each project's `CLAUDE.md`, reference the shared rules:
 ```
 
 Then add project-specific instructions in `CLAUDE.local.md` alongside it.
+
+Tool-specific instructions can be referenced only by the tools that need them:
+
+```markdown
+@/path/to/shared-rules/tooling/codex-workflow.md
+@/path/to/shared-rules/tooling/opencode-tools.md
+```
+
+Downstream repos that use Codex skills can copy
+`templates/skills/coding-rules/SKILL.md` into their local skill directory and
+replace `/path/to/shared-rules` with the real checkout path.
 
 ## Editing
 
