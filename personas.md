@@ -46,7 +46,8 @@ This does NOT apply to:
 
 ## Eddie — Principal / Customer
 
-Email: ed.haynes.h@gmail.com
+Email: xx@gmail.com
+
 Sets priorities, signs off on plans, authorizes pushes.
 
 ---
