@@ -137,6 +137,20 @@ The intended end user of Ghostwriter/Storywriter is a **writer with no understan
 - The LLM MUST maintain `CHANGELOG.md` (Keep a Changelog format) with every version bump.
 - MUST embed version + short git SHA + build date at build time.
 
+### 8.1 Tags are immutable; check remote before tagging
+
+- **Tagged versions are read-only.** Once a tag is pushed to the remote, the LLM MUST NOT move, delete, force-overwrite, or otherwise mutate it. Tags identify a specific commit forever; rewriting them silently breaks anyone who pinned to that tag (containers, deploys, archives, downstream forks).
+- **Before creating any new tag, the LLM MUST query the remote for the latest tagged version** and ensure the proposed tag is strictly greater under SemVer ordering. Required commands:
+  ```
+  git fetch --tags origin
+  gh api repos/<owner>/<repo>/tags --jq '.[].name' | head -20
+  ```
+  The LLM MUST compare against the union of local and remote tags — not just local. A tag may exist on the remote that the local clone does not have (other contributor, other agent, prior auto-deploy).
+- If the latest remote tag is `vX.Y.Z`, the next tag MUST be `vX.Y.(Z+1)`, `vX.(Y+1).0`, or `v(X+1).0.0` per SemVer, never equal to or behind. Never reuse a tag name with a different SHA.
+- **The LLM MUST NOT push with `--tags` reflexively.** Push specific tag refs by name (`git push origin v1.2.3`) so accidentally-rewritten local tags can't clobber the remote.
+- **GitHub-side enforcement.** Where the plan allows it, the repo SHOULD have a tag protection ruleset blocking deletion and force-update of `v*` tags. Set via `gh api repos/<owner>/<repo>/rulesets -X POST` with a ruleset that targets `refs/tags/v*` and includes the `deletion` and `non_fast_forward` rules. On GitHub Free + private repos the ruleset API is unavailable; in that case the LLM MUST install a pre-push hook (see `hooks/tag-immutability.sh` if present) that rejects any push that would overwrite an existing tag on origin.
+- **If the LLM discovers an existing tag with a different SHA than expected**, it MUST stop and surface the discrepancy verbatim with both SHAs and their commit subjects before doing anything else. It MUST NOT attempt to "fix" the situation by retagging. The user decides.
+
 ---
 
 ## 9. Post-stable lifecycle
