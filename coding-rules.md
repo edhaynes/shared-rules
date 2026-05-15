@@ -24,6 +24,8 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 10. Commit often, push to main, no snowflakes. Working code MUST land on `main` frequently. The LLM MUST NOT accumulate uncommitted state — if it works, commit it.
 11. Fail fast. Invalid config, missing dependencies, unreachable backends, malformed input — the LLM MUST detect at startup or first use and crash with a clear message. MUST NOT limp along in a degraded state. Silent partial failure is worse than a loud crash.
 12. Latency and determinism. If an operation is unavoidably slow, the LLM MUST show progress and explain why. MUST NOT leave the user staring at a spinner with no context. Cached/precomputed paths SHOULD be the default; expensive paths SHOULD be explicit and rare.
+13. **No deploy without a passing secret scan. This applies to every coding agent, every deploy target, every time.** Cloud, on-prem, container build, demo box, k8s, Cloud Run, Vercel, a hand-copied tarball — the LLM MUST run a secret scan over the deploy artifact AND the full push range before any deploy or push that crosses a trust boundary. A "trust boundary" is anything beyond the local working tree: the remote git repo, a registry, a cluster, a host the LLM does not own. The LLM MUST NOT skip the scan because "it's just a quick demo," "it's a private repo," "the file was already there," or "another agent already pushed." If a scan finding cannot be cleared (false positive identified and documented, secret rotated, file scrubbed), the LLM MUST NOT proceed. See §7 for the scan tools and the post-leak rotation protocol.
+14. Verbatim diffs before pushing or deploying. The LLM MUST show the diff summary of *every* file in the push or deploy range, with extra scrutiny for files matching `*.yaml`, `*.yml`, `*.json`, `*.toml`, `*.env*`, `*secret*`, `*credential*`, `*.k8s.*`, `*.openshift.*`, `*helm*`, `Dockerfile*`, anything under `infra/`, `deploy/`, `k8s/`, `openshift/`, `terraform/`, `ansible/`. A literal-key leak hides best in a "harmless" yaml or env file that nobody bothered to inspect.
 
 ---
 
@@ -116,13 +118,45 @@ The intended end user of Ghostwriter/Storywriter is a **writer with no understan
 
 ## 7. Secret hygiene
 
+These rules apply to **every coding agent** (Claude, Codex, OpenCode, Cursor, Copilot, Aider, custom tooling) and **every operation that crosses a trust boundary** — commit, push, container build, registry push, k8s apply, Cloud Run deploy, OpenShift apply, image bake, tarball handoff, secret update via UI, anything. See §0.13.
+
+### 7.1 Tooling
+
 - Pre-commit hook is REQUIRED with at least: `gitleaks`, `detect-secrets` baseline, language linters.
 - Pre-push hook MUST run full secret scan again, plus tests.
-- `.gitignore` MUST cover: `.env`, `.env.*`, `*.pem`, `*.key`, `*.pfx`, `*.crt`, `id_rsa*`, `credentials.json`, `service-account*.json`, `.aws/`, `.azure/`, `.gcp/`.
-- Before any `git add` of a file the LLM didn't create, the LLM MUST scan for secret-looking strings. If one is found, MUST stop and flag it.
-- Before any `git commit`: the LLM MUST show `git diff --cached --stat` plus full diff of any file matching `.env*`, `*.config*`, `*secret*`, `*credential*`, `*.yaml|*.yml|*.json|*.toml`.
-- Before any `git push`: the LLM MUST re-run secret scan against push range, MUST confirm verbally.
-- If a secret has ever been committed, the LLM MUST treat it as compromised: rotate first, then clean history.
+- `.gitignore` MUST cover: `.env`, `.env.*`, `*.pem`, `*.key`, `*.pfx`, `*.crt`, `id_rsa*`, `credentials.json`, `service-account*.json`, `.aws/`, `.azure/`, `.gcp/`, `*.kubeconfig`, `*.openshiftconfig`.
+- If pre-commit/pre-push hooks are missing in the repo, the LLM MUST install them BEFORE the first commit or push. MUST NOT proceed without scan coverage on the grounds that "the repo doesn't have hooks yet" — the LLM installs them.
+
+### 7.2 Before any `git add`
+
+- The LLM MUST scan files it didn't author for secret-looking strings: long base64-ish blobs, `sk-…`, `gsk_…`, `xoxb-…`/`xoxp-…`, `ghp_…`, `AKIA…`, `AIza…`, `eyJ…\.eyJ…` (JWTs), `-----BEGIN [A-Z ]+PRIVATE KEY-----`, plausible passwords inside `stringData`/`data` blocks of k8s/OpenShift secret manifests, anything in a `kubeconfig` token field.
+- If one is found, MUST stop and flag it. MUST NOT add the file. MUST NOT propagate the secret anywhere — not even a "temporary" copy in chat or a scratch file.
+
+### 7.3 Before any `git commit`
+
+- The LLM MUST show `git diff --cached --stat` plus full diff of any file matching `.env*`, `*.config*`, `*secret*`, `*credential*`, `*.yaml`, `*.yml`, `*.json`, `*.toml`, `*.kubeconfig`, anything under `infra/`, `deploy/`, `k8s/`, `openshift/`, `terraform/`, `ansible/`, `helm/`.
+- Even if the file was already in the repo, the LLM MUST inspect the diff. A leaked key hides best inside an "ordinary" config commit by another agent. Trust no prior commit blind; scan what you're about to add.
+
+### 7.4 Before any `git push`
+
+- The LLM MUST re-run the secret scan against the *entire push range* (`git log <upstream>..HEAD`), not just the tip. A prior agent may have introduced a key in an intermediate commit; force-push or rebase cleanup is the only path forward if found.
+- The LLM MUST confirm verbally (in chat) with the human before pushing. The human's most recent message MUST contain the word "push" (see §0.1 in `CLAUDE.md` / project-level rules). Implicit authorization does not count.
+
+### 7.5 Before any deploy (cloud, on-prem, container, anything)
+
+- The LLM MUST scan the *full deploy artifact* — not just the changed files since the last deploy. Container image build context, helm chart values, OpenShift/k8s manifests applied, Cloud Run env vars, Vercel secret bindings, any tarball or zip handed off. Everything.
+- The LLM MUST scan whatever credentials substrate the deploy *reads from* (e.g., a `.env` mounted at deploy time, a `Secret` referenced by the manifest) and confirm those credentials are not also embedded literally in any version-controlled file.
+- The LLM MUST refuse to deploy if a finding is unclear, even if "the deploy is urgent." A leaked key is faster to rotate than a public-domain credential is to revoke.
+
+### 7.6 Post-leak protocol (the "groq-key-leak" lesson)
+
+If a secret has *ever* been committed — even briefly, even rolled back, even on a private repo, even by another agent — the LLM MUST:
+
+1. **Stop. Surface to the human verbatim** with the SHA, the file, and the secret string. Do not redact partial characters; the human owns the credential and needs to identify exactly which one.
+2. **Rotate first, clean history second.** The key is burned the moment it touched a hostable git ref. GitHub retains pushed objects for ~90 days after they become unreachable; clones and forks made during the window keep the secret indefinitely.
+3. **Then** propose history cleanup (force-push after rebase, `git filter-repo`, BFG, GitHub Support purge request). MUST get explicit confirmation before any history rewrite.
+4. **Document** in `bugs.md` and the post-mortem: when, who introduced it, what scan would have caught it, what changed in the rules or hooks to prevent the next one.
+5. **Audit other repos** the same agent or human may have touched in the same session. Leaks pattern by carelessness, not by intent — if it happened once, it may have happened elsewhere.
 
 ---
 
