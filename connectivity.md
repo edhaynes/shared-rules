@@ -102,5 +102,43 @@ ssh frogstation 'powershell -NoProfile -Command "(Invoke-WebRequest -UseBasicPar
 ssh frogstation 'powershell -NoProfile -Command "(Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8188/object_info/CheckpointLoaderSimple).Content"'
 ```
 
+## Trap 4 — stale ComfyUI squatting :8188
+
+**Symptom:** every job fails with `KSampler … OSError: [Errno 22] Invalid
+argument`, while `/system_stats` and `/object_info` still answer fine. A
+"fresh" relaunch doesn't help and the error message keeps the *same* cached
+nodes.
+
+**Cause:** an old ComfyUI process (often the **system** Python
+`C:\Users\edhay\AppData\Local\Programs\Python\Python312\python.exe`, not the
+`.venv` one) still owns port 8188. New launches via
+`.venv\Scripts\python.exe` silently fail to bind, so the broken detached
+instance keeps serving — its sampler writes to a dead console handle →
+`[Errno 22]`. Verified-fresh process shows much higher free VRAM
+(~14.6 GiB vs ~8 GiB on the wedged one) and an empty execution cache.
+
+**Fix (run on frogstation, elevated PowerShell):**
+
+```powershell
+# identify what owns 8188 (confirm it's python before killing)
+Get-NetTCPConnection -LocalPort 8188 -State Listen | ForEach-Object { Get-Process -Id $_.OwningProcess | Select-Object Id,ProcessName,Path }
+# kill it
+Get-NetTCPConnection -LocalPort 8188 -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+# confirm free (prints nothing)
+Get-NetTCPConnection -LocalPort 8188 -State Listen -ErrorAction SilentlyContinue
+```
+
+Then relaunch from the **`.venv`** in a console you keep open:
+
+```cmd
+set TQDM_DISABLE=1
+cd C:\Users\edhay\ComfyUI
+.venv\Scripts\python.exe main.py --listen 0.0.0.0 --port 8188
+```
+
+Always launch ComfyUI from its own `.venv`, not system Python, and from a
+real local console (not an SSH pipe / detached) — both independently cause
+the `[Errno 22]` class of failure.
+
 See also `rules/network-security.md` for the Tailscale zero-trust mesh
 requirements this host operates under.
