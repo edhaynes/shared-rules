@@ -14,6 +14,7 @@ Only rules that are **universal across every project**:
 - `hooks/` -- reusable, agent-agnostic Git hooks for downstream repos
 - `tooling/` -- tool-specific workflow guidance for Codex, OpenCode, etc.
 - `templates/` -- copyable skill/hook/config templates for downstream repos
+- `connectivity.md` -- shared infra access (frogstation GPU box: SSH/Tailscale gotchas, host facts). Operational, not a coding rule; here so every machine/agent shares one copy.
 - `rules/` -- domain-specific rule sets:
   - `rules/network-security.md` -- WireGuard/Tailscale zero-trust mesh requirements
   - `rules/content-safety.md` -- immutable content rules (no porn, no copyright, no real people) + AI enforcement + report-user requirements
