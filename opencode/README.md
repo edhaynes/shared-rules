@@ -19,6 +19,7 @@ all).
 | `tools/ls.ts` | `ls` with optional path + flags. Returns stdout or stderr+exit code on failure. |
 | `tools/apply_patch.ts` | Parses OpenAI `apply_patch` envelope format (Add/Update/Delete/Move). Tolerates JSON-wrapped or fenced inputs. |
 | `tools/repo_browser.search.ts` | Repo content search via ripgrep with `query`/`path`/`glob`/`case_sensitive`/`max_results`. Matches the `repo_browser.search` name from gpt-oss-120b's internal namespace. |
+| `tools/read.ts` | Tolerant-schema replacement for the built-in `read`. Accepts the file path under `filePath`/`path`/`file`/`filename`/`file_path` so gpt-oss-120b's variant arg names validate. Mirrors the standard contract (line-numbered output, `offset`+`limit`, 5MB cap, binary sniff). |
 
 ## Wiring into OpenCode
 
