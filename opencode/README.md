@@ -27,18 +27,28 @@ name (`webfetch.ts` registers a tool called `webfetch`).
 - Global: `~/.config/opencode/tools/<name>.ts`
 - Project-local: `.opencode/tools/<name>.ts`
 
-The recommended setup is to keep this folder as the canonical source and
-symlink each file into `~/.config/opencode/tools/`:
+This folder is the canonical source. Sync into `~/.config/opencode/tools/`
+with `sync.sh`:
 
 ```bash
-mkdir -p ~/.config/opencode/tools
-for f in ~/projects/shared-rules/opencode/tools/*.ts; do
-  ln -sf "$f" ~/.config/opencode/tools/"$(basename "$f")"
-done
+~/projects/shared-rules/opencode/sync.sh
 ```
 
-Restart the OpenCode session after adding or modifying a wrapper — the
-plugin registry is built at startup.
+Restart the OpenCode session after running `sync.sh` — the plugin registry
+is built at startup.
+
+### Why copies and not symlinks
+
+OpenCode's plugin loader (Bun) resolves symlinks to their real path before
+looking up imports, then resolves `@opencode-ai/plugin` walking up from
+there. That package only exists under `~/.config/opencode/node_modules`,
+so a symlink pointing into this repo causes `Cannot find module
+'@opencode-ai/plugin'` and **silently kills tool resolution for every
+prompt** — the model sits there with no tools to call. File copies dodge
+the resolution problem entirely.
+
+Override the destination by setting `OPENCODE_TOOLS_DIR` before invoking
+the script.
 
 ## Why this matters (the LiteLLM crash chain)
 
