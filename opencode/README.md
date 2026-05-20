@@ -20,6 +20,7 @@ all).
 | `tools/apply_patch.ts` | Parses OpenAI `apply_patch` envelope format (Add/Update/Delete/Move). Tolerates JSON-wrapped or fenced inputs. |
 | `tools/repo_browser.search.ts` | Repo content search via ripgrep with `query`/`path`/`glob`/`case_sensitive`/`max_results`. Matches the `repo_browser.search` name from gpt-oss-120b's internal namespace. |
 | `tools/read.ts` | Tolerant-schema replacement for the built-in `read`. Accepts the file path under `filePath`/`path`/`file`/`filename`/`file_path` so gpt-oss-120b's variant arg names validate. Mirrors the standard contract (line-numbered output, `offset`+`limit`, 5MB cap, binary sniff). |
+| `tools/repo_browser.open_file.ts` | View a file (or line range) — companion to `repo_browser.search`. Accepts path under several aliases, line range under `line_start`+`line_end` / `start_line`+`end_line` / `offset`+`limit`. Default window: first 200 lines. cat -n output, 5 MB cap, binary sniff. |
 
 ## Wiring into OpenCode
 
