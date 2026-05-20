@@ -155,6 +155,7 @@ Each project appends a short suffix to persona names:
 | phantotype | `-phan` | Jason-phan, Claudius-phan |
 | dnd3 | `-dnd` | Jason-dnd, Claudius-dnd |
 | arch-playground | `-arch` | Jason-arch, Claudius-arch |
+| photolab | `-photo` | Jason-photo, Claudius-photo |
 
 Add new projects to this table as they are created.
 
