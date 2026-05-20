@@ -18,6 +18,7 @@ all).
 | `tools/webfetch.ts` | Same body as `fetch.ts`; the model hallucinates both names. |
 | `tools/ls.ts` | `ls` with optional path + flags. Returns stdout or stderr+exit code on failure. |
 | `tools/apply_patch.ts` | Parses OpenAI `apply_patch` envelope format (Add/Update/Delete/Move). Tolerates JSON-wrapped or fenced inputs. |
+| `tools/repo_browser.search.ts` | Repo content search via ripgrep with `query`/`path`/`glob`/`case_sensitive`/`max_results`. Matches the `repo_browser.search` name from gpt-oss-120b's internal namespace. |
 
 ## Wiring into OpenCode
 
