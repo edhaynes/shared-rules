@@ -1,0 +1,41 @@
+# Pre-commit hooks for shared-rules.
+# Enforces coding-rules.md §7.1 (secret hygiene) and §8.1 (tag immutability).
+# Wire up with: pre-commit install && pre-commit install --hook-type pre-push
+
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: ^\.secrets\.baseline$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: tag-immutability
+        name: "Tag immutability (§8.1)"
+        entry: hooks/tag-immutability.sh
+        language: script
+        stages: [pre-push]
+        pass_filenames: false
+
+      - id: gitleaks-push-range
+        name: "gitleaks push-range scan (§7.4)"
+        entry: bash -c 'gitleaks detect --source . --log-opts="origin/main..HEAD" --no-banner'
+        language: system
+        stages: [pre-push]
+        pass_filenames: false
