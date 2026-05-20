@@ -42,9 +42,15 @@ secret-bearing file: scan them, gitignore them, and never commit them.
 
 `gpt-oss-120b` and other weaker tool-calling models will repeatedly invoke
 tools that do not exist in the OpenCode registry (e.g. `webfetch`, `fetch`,
-`search`). Prompt-engineering this away is unreliable. The durable fix is to
-**meet the model where it is**: define a real custom tool with the exact name
-the model keeps inventing, and have it shell out to the underlying CLI.
+`search`, `apply_patch`). Prompt-engineering this away is unreliable. The
+durable fix is to **meet the model where it is**: define a real custom tool
+with the exact name the model keeps inventing, and have it shell out to the
+underlying CLI.
+
+Canonical wrappers live in this repo at `opencode/tools/`; see
+`../opencode/README.md` for the recommended symlink-into-`~/.config`
+workflow, the current wrapper inventory (fetch, webfetch, ls, apply_patch),
+and the broader LiteLLM crash chain this prevents.
 
 ### Where custom tools live
 
