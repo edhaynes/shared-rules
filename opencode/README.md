@@ -21,6 +21,11 @@ all).
 | `tools/repo_browser.search.ts` | Repo content search via ripgrep with `query`/`path`/`glob`/`case_sensitive`/`max_results`. Matches the `repo_browser.search` name from gpt-oss-120b's internal namespace. |
 | `tools/read.ts` | Tolerant-schema replacement for the built-in `read`. Accepts the file path under `filePath`/`path`/`file`/`filename`/`file_path` so gpt-oss-120b's variant arg names validate. Mirrors the standard contract (line-numbered output, `offset`+`limit`, 5MB cap, binary sniff). |
 | `tools/repo_browser.open_file.ts` | View a file (or line range) — companion to `repo_browser.search`. Accepts path under several aliases, line range under `line_start`+`line_end` / `start_line`+`end_line` / `offset`+`limit`. Default window: first 200 lines. cat -n output, 5 MB cap, binary sniff. |
+| `tools/repo_browser.find.ts` | Filename search (complements `repo_browser.search` content search). `fd` if installed, else `rg --files \| rg`. |
+| `tools/browser.search.ts` | Web search — DuckDuckGo HTML endpoint, no API key. Trained gpt-oss `browser.search`: `query`, `topn`, `source`. |
+| `tools/browser.open.ts` | Open a URL — `curl` + text extraction + line-numbered window. Trained gpt-oss `browser.open`: `id` (URL), `loc`, `num_lines`, `view_source`. |
+| `tools/browser.find.ts` | Find a pattern on a page — `curl` + grep. Pass `url` (preferred) or `cursor` as the URL string. Trained gpt-oss `browser.find`. |
+| `tools/python.ts` | Execute Python via `./.venv/bin/python` if present else `python3`, 120 s timeout, fresh subprocess per call. Trained gpt-oss `python` tool. |
 
 ## Wiring into OpenCode
 
